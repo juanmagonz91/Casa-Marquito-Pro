@@ -36,9 +36,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
     phone: '',
     address: '',
     department: '',
-    city: ''
+
+    city: '',
+    documentNumber: ''
   });
-  
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -51,6 +53,10 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
         if (!value.trim()) return "El nombre es obligatorio.";
         if (/\d/.test(value)) return "El nombre no debe contener números.";
         if (value.trim().length < 3) return "El nombre debe tener al menos 3 caracteres.";
+        break;
+      case 'documentNumber':
+        if (!value.trim()) return "El CI o RUC es obligatorio.";
+        if (value.trim().length < 5) return "El documento debe tener al menos 5 caracteres.";
         break;
       case 'email':
         if (!value.trim()) return "El correo es obligatorio.";
@@ -101,7 +107,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       // Scroll to the first error if needed, or just let the user see the red fields
       return;
@@ -116,7 +122,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // Clear error for this field when user types
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -152,16 +158,15 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
             <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Completo</label>
-                <input 
+                <input
                   required
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  type="text" 
-                  className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${
-                    errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                  }`}
+                  type="text"
+                  className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                    }`}
                   placeholder="Ej. Juan Pérez"
                 />
                 {errors.name && (
@@ -171,20 +176,40 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                   </p>
                 )}
               </div>
-              
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CI o RUC</label>
+                <input
+                  required
+                  name="documentNumber"
+                  value={formData.documentNumber}
+                  onChange={handleInputChange}
+                  onBlur={handleBlur}
+                  type="text"
+                  className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.documentNumber ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                    }`}
+                  placeholder="Ej. 1234567 o 80012345-6"
+                />
+                {errors.documentNumber && (
+                  <p className="text-red-500 text-xs mt-1 font-medium animate-in slide-in-from-top-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">error</span>
+                    {errors.documentNumber}
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Correo Electrónico</label>
-                  <input 
+                  <input
                     required
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    type="email" 
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${
-                      errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                    }`}
+                    type="email"
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                      }`}
                     placeholder="juan@ejemplo.com"
                   />
                   {errors.email && (
@@ -196,16 +221,15 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Celular</label>
-                  <input 
+                  <input
                     required
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    type="tel" 
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${
-                      errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                    }`}
+                    type="tel"
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                      }`}
                     placeholder="09XX XXX XXX"
                   />
                   {errors.phone && (
@@ -219,16 +243,15 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
 
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dirección</label>
-                <input 
+                <input
                   required
                   name="address"
                   value={formData.address}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  type="text" 
-                  className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${
-                    errors.address ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                  }`}
+                  type="text"
+                  className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.address ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                    }`}
                   placeholder="Calle y número de casa/edificio"
                 />
                 {errors.address && (
@@ -248,9 +271,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                     value={formData.department}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${
-                      errors.department ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                    }`}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white transition-all ${errors.department ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                      }`}
                   >
                     <option value="">Selecciona un departamento</option>
                     {Object.keys(PARAGUAY_LOCATIONS).sort().map(dept => (
@@ -266,16 +288,15 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ciudad</label>
-                  <select 
+                  <select
                     required
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     disabled={!formData.department}
-                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all ${
-                      errors.city ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
-                    }`}
+                    className={`w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-xl focus:ring-primary focus:border-primary dark:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all ${errors.city ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 dark:bg-red-900/10' : ''
+                      }`}
                   >
                     <option value="">{formData.department ? 'Selecciona una ciudad' : 'Elige departamento primero'}</option>
                     {availableCities.sort().map(city => (
@@ -298,7 +319,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
               <span className="material-symbols-outlined text-primary">account_balance</span>
               Información Bancaria
             </h3>
-            
+
             <div className="space-y-4">
               <div className="p-5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50">
                 <div className="flex items-center gap-3 mb-4">
@@ -310,7 +331,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                     <p className="text-xs text-slate-500">Sin comisiones adicionales</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 border-dashed">
                     <span className="text-xs uppercase font-bold text-slate-400">Banco</span>
@@ -324,7 +345,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                     <span className="text-xs uppercase font-bold text-slate-400">Cuenta</span>
                     <span className="font-mono font-bold select-all bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">720 1234567</span>
                   </div>
-                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 border-dashed">
+                  <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 border-dashed">
                     <span className="text-xs uppercase font-bold text-slate-400">RUC</span>
                     <span className="font-mono font-bold select-all bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">80012345-6</span>
                   </div>
@@ -338,8 +359,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
               <div className="flex gap-3 items-start p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs rounded-xl border border-blue-100 dark:border-blue-800/30">
                 <span className="material-symbols-outlined text-lg mt-0.5">info</span>
                 <p>
-                  Una vez realizada la transferencia, por favor envía tu comprobante de pago al correo 
-                  <span className="font-bold mx-1">pagos@catalogoestilo.com.py</span> 
+                  Una vez realizada la transferencia, por favor envía tu comprobante de pago al correo
+                  <span className="font-bold mx-1">pagos@catalogoestilo.com.py</span>
                   para procesar el envío.
                 </p>
               </div>
@@ -351,7 +372,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
         <div className="space-y-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm sticky top-24">
             <h3 className="text-lg font-bold mb-4 text-slate-800 dark:text-white">Resumen del Pedido</h3>
-            
+
             <div className="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {cartItems.map((item) => (
                 <div key={item.id} className="flex gap-3 text-sm">
@@ -382,7 +403,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
               </div>
             </div>
 
-            <button 
+            <button
               form="checkout-form"
               type="submit"
               disabled={loading}

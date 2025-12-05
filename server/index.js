@@ -1,8 +1,8 @@
 
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { products } = require('./data');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { products } from './data.js';
 
 const app = express();
 const PORT = 3001;
@@ -36,7 +36,7 @@ app.get('/api/products/:id', (req, res) => {
 // 3. POST /api/orders - Crear un nuevo pedido
 app.post('/api/orders', (req, res) => {
   const newOrder = req.body;
-  
+
   // Validación básica
   if (!newOrder.items || newOrder.items.length === 0) {
     return res.status(400).json({ message: 'El pedido no tiene artículos.' });
@@ -44,13 +44,13 @@ app.post('/api/orders', (req, res) => {
 
   // Guardar en "Base de Datos"
   orders.push(newOrder);
-  
-  console.log(`POST /api/orders - Nuevo pedido recibido: ${newOrder.id} de ${newOrder.customerName}`);
-  
+
+  console.log(`POST /api/orders - Nuevo pedido recibido: ${newOrder.id} de ${newOrder.name} (Doc: ${newOrder.documentNumber})`);
+
   // Responder con éxito
-  res.status(201).json({ 
-    message: 'Pedido recibido correctamente', 
-    orderId: newOrder.id 
+  res.status(201).json({
+    message: 'Pedido recibido correctamente',
+    orderId: newOrder.id
   });
 });
 

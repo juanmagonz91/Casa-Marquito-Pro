@@ -18,6 +18,7 @@ export interface Order {
   status: 'pending' | 'paid' | 'shipped' | 'delivered';
   items: CartItem[];
   paymentMethod: string;
+  documentNumber: string;
 }
 
 export interface Address {

@@ -2,7 +2,7 @@
 // Estos son los datos iniciales que vivian en el frontend.
 // Ahora viven en el servidor (Backend).
 
-const products = [
+export const products = [
   {
     id: '1',
     name: 'Jarrón Cerámico',
@@ -53,4 +53,4 @@ const products = [
   },
 ];
 
-module.exports = { products };
+
