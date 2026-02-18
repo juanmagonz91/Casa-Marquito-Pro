@@ -1,0 +1,15 @@
+# ── Backend: Express API ─────────────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar manifiestos e instalar solo dependencias de producción
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copiar únicamente el código del servidor
+COPY server/ ./server/
+
+EXPOSE 3001
+
+CMD ["node", "server/index.js"]

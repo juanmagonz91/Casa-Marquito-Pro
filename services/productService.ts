@@ -1,73 +1,18 @@
 
 import { Product } from '../types';
 
-const API_URL = 'http://localhost:3001/api';
-
-// Fallback data in case server is offline
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'Jarrón Cerámico',
-    price: 25.00,
-    category: 'Decoración',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBk9NjumA1YAiEt_7cL8lq13fazikGfyNw85crq3jbsLrqBdrJKtTMZ8_N8kHyfsN__N5spe9HzLuK5NFp5PpUaBpk2uQNrD6y4UhYyQQ5X3t9PqoYFXpeGGxELbPSnvk9rYh38e2UZuJyclQP1zVMXs8zGyGB9FLkviyB05evBz7iQu0QM8Rs7g0ClfjyfjMuFdBq-6qVuoGgOGRcgbYpCBpeK1xlcX19qDMpgd8zhe36t4lDwBjv9nNnXFW6jcBNfuKwnwYslvNu-',
-    description: 'Jarrón minimalista de cerámica blanca con acabado mate.'
-  },
-  {
-    id: '2',
-    name: 'Utensilios de Cocina',
-    price: 32.50,
-    category: 'Cocina',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCDSQ_tji91pojsd8uyWJPapPs4VKtysjIdtdZsj9A4A64BA_46AmhMgjnSoFhNEQgGT5FHG0rZ3Q-CGvch94BKdSGpOwc5qla87si0CnEfsPWjByXaSTfaXEl65M2nOXz8PEYWN3td-hvIDSUWT6Gvi9KKqphiJIX352VCh4SpBcZwelcWk7E59SoXtzm0FV4cmZqr_Uh7zLp7Z9mpez1qVjr8twVYypGtYDvSc4aCUuSrLcsLMEVY2M-u4gCfNuiXOHj5vsug0q8r',
-    description: 'Set de utensilios de madera de bambú sostenibles.'
-  },
-  {
-    id: '3',
-    name: 'Lámpara de Escritorio',
-    price: 48.00,
-    category: 'Decoración',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD63QL6DidxWpw8GQkC_lbvt8OrBHM7eml_5mkdxTvsdOPn4AlhYAMtZW56lLb0msA4VK8iQca5kZIVMais9XMlcjx8yqjxksApXjqexLeXsAX5bOjD8a-kH1Oq1ZTpUloYb_Qu1G5bwpsd1W5e6BPRv7CeSdUrqFPYdsFk0jNogoR-1hVjraOK6O65vtT3Dbh3L-I2ZUDE5HSQf8qj2eu3HI-BIAjsfzmhCWr_umtylX3Rvjb_g_QVyUpc5AiSsdWay1ydpJd4SoWZ',
-    description: 'Lámpara LED moderna con luz cálida ajustable.'
-  },
-  {
-    id: '4',
-    name: 'Cojín Texturizado',
-    price: 19.99,
-    category: 'Textil',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCkpPiP9YUx4_Bbj6XK5yHaYAhHR1elKb71Dpaow00wi8oyhS3ZMML83o-xdWeJPIJB0BL-QZS1p7YGBtmaGX2l91fNYBN1VueJxw4sFczngyUdgNcQh8tjtuukVgVF53bTNP3xzwQ5aGrHsP0mOKZvaaTXLHyzB1G4I2cfv2SyB6ZTzFzNf8z4Rw4awiz0A3Xs0BLerduLDo5RhoLA_f1uXu1vjqYBYab0BCBWjL8CpDRPwq2w_TbgmJzUA-1c9_VcxXu2RNJwZb44',
-    description: 'Cojín suave con textura tejida en color beige neutro.'
-  },
-  {
-    id: '5',
-    name: 'Planta Suculenta',
-    price: 15.00,
-    category: 'Jardín',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBmsIcdbby4-1PQXkSMo3iaa4xagJKOBkYgMpg6HseRn6VgLmaxMqV6Xp4Wk7lDQTI7JLY_BdioVGNiJGbEmNmHTV29hp5uu9vx1-A1qWhJb59tzm7hOobRAiqKG1aRdNvDr8-yW3D9xvi1hUrA7VvWhscXNcVEiawp9O-W5e-yhcgK0GqML-rLeG7yb4dV_-fky9R4hyRiTasjz7hnexvhVJO4PcT31bakkeWA5yasVeiFn0Ju2rb8274zsSgVnmyOE0CJzynRu5NF',
-    description: 'Pequeña suculenta artificial en maceta geométrica.'
-  },
-  {
-    id: '6',
-    name: 'Dispensador de Jabón',
-    price: 22.00,
-    category: 'Baño',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfX2wEaiwHf4wp9QHJkwKZQb81ck2A8umeY5UPQ--SC2OFXYZza_wHQ-Qwk1Fl7o6zP_XWVUkWAA1-N1l7simWXUBYLi8Ogby0RiubXwWUAE20mUPYyZVYCFFmdLfpZgD-kpNd7O6_nSo2H4G3Let0kbDMoOoJsqeAM2mhJ5aSBAaBHtiOmzNTGypyEyfcsH92HajKYTSSj0Jea-ITAdr3KTLLKYOp0zYTpX8QSHafbNyI_XvVGlXUMPK05UhP2xzGW8o2xu-aeNf_',
-    description: 'Dispensador de vidrio ámbar elegante y reutilizable.'
-  },
-];
+// En producción, cambia esto por tu URL de Render
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export const productService = {
   getProducts: async (): Promise<Product[]> => {
     try {
       const response = await fetch(`${API_URL}/products`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Network response was not ok');
       return await response.json();
     } catch (error) {
-      console.warn("Backend not accessible. Using Mock Data.", error);
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_PRODUCTS), 300);
-      });
+      console.warn("Backend not accessible. Check your Render URL or local server.", error);
+      return [];
     }
   },
 
@@ -75,16 +20,47 @@ export const productService = {
     try {
       const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       });
       if (!response.ok) throw new Error('Failed to submit order');
       return await response.json();
     } catch (error) {
-      console.warn("Backend not accessible. Order saved locally only.", error);
-      return { success: true, localOnly: true };
+      console.error("Error submitting order", error);
+      throw error;
     }
-  }
+  },
+
+  validateCoupon: async (code: string, subtotal: number): Promise<any> => {
+    // Cupones fallback para desarrollo u offline
+    const FALLBACK_COUPONS: Record<string, any> = {
+      'MARQUITO10': { type: 'percent', value: 10, description: '10% de descuento' },
+      'BIENVENIDO15': { type: 'percent', value: 15, description: '15% de descuento de bienvenida' },
+      'ENVIOGRATIS': { type: 'shipping', value: 0, description: 'Envío gratuito' },
+      'MARQUITO20': { type: 'percent', value: 20, description: '20% de descuento especial' },
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/coupons/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, subtotal }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.valid) throw new Error(data.message || 'Cupón no válido.');
+      return data;
+    } catch (error: any) {
+      const coupon = FALLBACK_COUPONS[code.toUpperCase()];
+      if (!coupon) throw new Error('Cupón no válido o expirado.');
+      const discountAmount = coupon.type === 'percent' ? parseFloat((subtotal * coupon.value / 100).toFixed(2)) : 0;
+      return {
+        valid: true,
+        code: code.toUpperCase(),
+        ...coupon,
+        discountAmount,
+        shippingFree: coupon.type === 'shipping',
+        message: `¡Cupón aplicado! ${coupon.description}`
+      };
+    }
+  },
 };

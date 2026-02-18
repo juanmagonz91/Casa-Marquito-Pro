@@ -1,4 +1,14 @@
 
+import { auth } from '../src/firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInAnonymously,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
+
 interface User {
   id: string;
   name: string;
@@ -8,69 +18,69 @@ interface User {
 
 export const authService = {
   login: async (email: string, password: string): Promise<User> => {
-    // Simular retraso de red
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Simulación muy básica: Acepta cualquier correo con formato válido y password > 3 chars
-        // En un backend real, aquí se verificaría contra la base de datos hash
-        if (password.length < 4) {
-          reject(new Error("La contraseña es incorrecta."));
-          return;
-        }
-
-        const mockUser: User = {
-          id: 'user-123',
-          name: email.split('@')[0], // Usar parte del correo como nombre si no existe
-          email: email,
-          isGuest: false
-        };
-        
-        // Guardar sesión simulada
-        localStorage.setItem('user_session', JSON.stringify(mockUser));
-        resolve(mockUser);
-      }, 1000);
-    });
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const fbUser = userCredential.user;
+    return {
+      id: fbUser.uid,
+      name: fbUser.displayName || email.split('@')[0],
+      email: fbUser.email || '',
+      isGuest: false
+    };
   },
 
   register: async (name: string, email: string, password: string): Promise<User> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          name,
-          email,
-          isGuest: false
-        };
-        localStorage.setItem('user_session', JSON.stringify(newUser));
-        resolve(newUser);
-      }, 1500);
-    });
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const fbUser = userCredential.user;
+    // En Firebase Auth, para poner el nombre, se usa updateProfile, pero aquí simplificamos devolviendo el objeto
+    return {
+      id: fbUser.uid,
+      name: name,
+      email: fbUser.email || '',
+      isGuest: false
+    };
   },
 
   loginAsGuest: async (): Promise<User> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const guestUser: User = {
-          id: 'guest',
-          name: 'Invitado',
-          email: '',
-          isGuest: true
-        };
-        localStorage.setItem('user_session', JSON.stringify(guestUser));
-        resolve(guestUser);
-      }, 800);
-    });
+    const userCredential = await signInAnonymously(auth);
+    const fbUser = userCredential.user;
+    return {
+      id: fbUser.uid,
+      name: 'Invitado',
+      email: '',
+      isGuest: true
+    };
   },
 
-  logout: () => {
-    localStorage.removeItem('user_session');
-    // También limpiamos el carrito al salir por seguridad en esta demo
+  logout: async () => {
+    await signOut(auth);
+    localStorage.removeItem('user_session'); // Limpieza adicional si se usaba antes
     localStorage.removeItem('cart');
-    localStorage.removeItem('favorites');
   },
 
   getCurrentUser: (): User | null => {
-    const session = localStorage.getItem('user_session');
-    return session ? JSON.parse(session) : null;
+    const user = auth.currentUser;
+    if (!user) return null;
+    return {
+      id: user.uid,
+      name: user.displayName || (user.isAnonymous ? 'Invitado' : user.email?.split('@')[0] || 'Usuario'),
+      email: user.email || '',
+      isGuest: user.isAnonymous
+    };
+  },
+
+  // Helper para suscribirse a cambios de estado
+  onAuthChange: (callback: (user: User | null) => void) => {
+    return onAuthStateChanged(auth, (fbUser) => {
+      if (fbUser) {
+        callback({
+          id: fbUser.uid,
+          name: fbUser.displayName || (fbUser.isAnonymous ? 'Invitado' : fbUser.email?.split('@')[0] || 'Usuario'),
+          email: fbUser.email || '',
+          isGuest: fbUser.isAnonymous
+        });
+      } else {
+        callback(null);
+      }
+    });
   }
 };

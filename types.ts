@@ -5,6 +5,7 @@ export interface Product {
   category: string;
   imageUrl: string;
   description: string;
+  stock: number;
 }
 
 export interface CartItem extends Product {
@@ -15,10 +16,14 @@ export interface Order {
   id: string;
   date: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  couponCode?: string;
+  couponDiscount?: number;
   status: 'pending' | 'paid' | 'shipped' | 'delivered';
   items: CartItem[];
   paymentMethod: string;
-  documentNumber: string;
+  documentNumber?: string;
 }
 
 export interface Address {

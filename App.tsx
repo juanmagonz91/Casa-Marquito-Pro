@@ -37,14 +37,13 @@ const App: React.FC = () => {
   // --- Data State ---
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [user, setUser] = useState<any>(null);
+
   // Persisted States
   const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage('cart', []));
   const [orders, setOrders] = useState<Order[]>(() => loadFromStorage('orders', []));
-  
-  // Also load addresses here to pass down
   const [addresses, setAddresses] = useState<Address[]>(() => loadFromStorage('addresses', [
-     { id: 1, label: 'Casa', line1: 'Av. Reforma 123, Depto 4B', line2: 'Ciudad de México, CDMX 06600' }
+    { id: 1, label: 'Casa', line1: 'Av. Reforma 123, Depto 4B', line2: 'Ciudad de México, CDMX 06600' }
   ]));
 
   // UI States
@@ -59,12 +58,17 @@ const App: React.FC = () => {
 
   // Initialize App (Auto-login guest & fetch products)
   useEffect(() => {
-    const initApp = async () => {
-      // Ensure we have a guest session for profile compatibility
-      if (!authService.getCurrentUser()) {
-        await authService.loginAsGuest();
+    // 1. Listen for Auth Changes
+    const unsubscribeAuth = authService.onAuthChange((authUser) => {
+      setUser(authUser);
+      if (!authUser) {
+        // Entrar como invitado si no hay sesión
+        authService.loginAsGuest();
       }
+    });
 
+    // 2. Fetch Products
+    const fetchProducts = async () => {
       try {
         const data = await productService.getProducts();
         setProducts(data);
@@ -74,8 +78,10 @@ const App: React.FC = () => {
         setLoading(false);
       }
     };
-    
-    initApp();
+
+    fetchProducts();
+
+    return () => unsubscribeAuth();
   }, []);
 
   // Persistence Effects
@@ -108,6 +114,12 @@ const App: React.FC = () => {
   const handleAddToCart = (product: Product) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
+      const currentQty = existingItem ? existingItem.quantity : 0;
+      // Verificar stock disponible
+      if (currentQty >= product.stock) {
+        // No agregar si ya se alcanzó el stock máximo
+        return prevCart;
+      }
       if (existingItem) {
         return prevCart.map((item) =>
           item.id === product.id
@@ -120,7 +132,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdateCartQuantity = (id: string, delta: number) => {
-    setCart((prevCart) => 
+    setCart((prevCart) =>
       prevCart.map((item) => {
         if (item.id === id) {
           const newQuantity = Math.max(1, item.quantity + delta);
@@ -144,8 +156,14 @@ const App: React.FC = () => {
   const handlePlaceOrder = async (shippingData: any) => {
     // 1. Calculate Totals
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = subtotal > 50 ? 0 : 9.99;
-    const total = subtotal + shipping;
+    const baseShipping = subtotal > 50 ? 0 : 9.99;
+    // Descuento por volumen del 10% si el subtotal supera $100
+    const discount = subtotal >= 100 ? parseFloat((subtotal * 0.10).toFixed(2)) : 0;
+    // Cupón aplicado desde el checkout
+    const appliedCoupon = shippingData.appliedCoupon ?? null;
+    const couponDiscount = appliedCoupon?.type !== 'shipping' ? (appliedCoupon?.discountAmount ?? 0) : 0;
+    const shipping = appliedCoupon?.shippingFree ? 0 : baseShipping;
+    const total = parseFloat((subtotal - discount - couponDiscount + shipping).toFixed(2));
     const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
     // 2. Create Order Object
@@ -153,16 +171,23 @@ const App: React.FC = () => {
       id: orderId,
       date: new Date().toISOString(),
       total: total,
-      status: 'pending', // Default for bank transfer
+      subtotal,
+      discount,
+      couponCode: appliedCoupon?.code,
+      couponDiscount,
+      status: 'pending',
       items: [...cart],
       paymentMethod: 'Transferencia Bancaria'
     };
-    
+
     // Add extra customer data for backend
     const fullOrderPayload = {
       ...newOrder,
+      shippingCost: shipping,
       customerName: shippingData.name,
       customerEmail: shippingData.email,
+      customerPhone: shippingData.phone,
+      documentNumber: shippingData.documentNumber,
       shippingAddress: shippingData
     };
 
@@ -172,27 +197,23 @@ const App: React.FC = () => {
     // 4. Save Order Locally (for Profile view)
     setOrders(prev => [newOrder, ...prev]);
 
-    // 5. Recommendation Logic: Find products NOT in the cart
+    // 5. Actualizar stock local de productos
+    setProducts(prev => prev.map(p => {
+      const cartItem = cart.find(c => c.id === p.id);
+      if (cartItem) return { ...p, stock: Math.max(0, p.stock - cartItem.quantity) };
+      return p;
+    }));
+
+    // 6. Recommendation Logic: Find products NOT in the cart
     const candidates = products.filter(p => !cart.some(c => c.id === p.id));
-    // Shuffle and pick 3
     const recommendations = candidates
       .sort(() => 0.5 - Math.random())
       .slice(0, 3);
-    
+
     setLastRecommendations(recommendations);
 
-    // 6. Generate Email (Simulated)
-    await emailService.sendOrderConfirmation({
-      orderId,
-      customerName: shippingData.name,
-      email: shippingData.email,
-      items: cart,
-      total,
-      shippingCost: shipping
-    }, recommendations);
-
     // 7. Clear and Redirect
-    setCart([]); // Clear cart
+    setCart([]);
     setCurrentView('success');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -204,7 +225,7 @@ const App: React.FC = () => {
   };
 
   // --- Computed Data ---
-  
+
   const displayedProducts = useMemo(() => {
     let filtered = products;
 
@@ -212,7 +233,7 @@ const App: React.FC = () => {
       // 1. Prepare search terms
       const normSearch = normalizeText(searchQuery);
       const normName = normalizeText(product.name);
-      
+
       const matchesSearch = normName.includes(normSearch);
 
       // 2. Filter Logic
@@ -231,7 +252,7 @@ const App: React.FC = () => {
   // Check if we are showing products from other categories during a search
   const hasCrossCategoryResults = useMemo(() => {
     if (!searchQuery || selectedCategory === 'Todo' || currentView !== 'catalog') return false;
-    
+
     return displayedProducts.some(p => p.category !== selectedCategory);
   }, [displayedProducts, searchQuery, selectedCategory, currentView]);
 
@@ -245,17 +266,17 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (currentView === 'home') {
       return (
-        <HomeView 
-          products={products} 
-          onCategorySelect={handleCategorySelectFromHome} 
+        <HomeView
+          products={products}
+          onCategorySelect={handleCategorySelectFromHome}
         />
       );
     }
 
     if (currentView === 'checkout') {
       return (
-        <CheckoutView 
-          cartItems={cart} 
+        <CheckoutView
+          cartItems={cart}
           onPlaceOrder={handlePlaceOrder}
           onBack={() => setCurrentView('catalog')}
         />
@@ -264,7 +285,7 @@ const App: React.FC = () => {
 
     if (currentView === 'success') {
       return (
-        <OrderSuccessView 
+        <OrderSuccessView
           onContinueShopping={() => setCurrentView('home')}
           recommendedProducts={lastRecommendations}
           onAddToCart={handleAddToCart}
@@ -275,9 +296,9 @@ const App: React.FC = () => {
     if (currentView === 'profile') {
       return (
         <div className="max-w-3xl mx-auto w-full">
-          <ProfileView 
-            orders={orders} 
-            onLogout={handleLogout} 
+          <ProfileView
+            orders={orders}
+            onLogout={handleLogout}
             addresses={addresses}
             onUpdateAddresses={setAddresses}
           />
@@ -337,10 +358,10 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full bg-background-light dark:bg-background-dark min-h-screen flex flex-col shadow-2xl overflow-hidden relative">
-      
+
       {/* Cart Drawer Overlay */}
-      <CartDrawer 
-        isOpen={isCartOpen} 
+      <CartDrawer
+        isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cartItems={cart}
         onUpdateQuantity={handleUpdateCartQuantity}
@@ -349,7 +370,7 @@ const App: React.FC = () => {
       />
 
       {/* Product Detail Modal */}
-      <ProductDetailModal 
+      <ProductDetailModal
         product={viewedProduct}
         isOpen={!!viewedProduct}
         onClose={() => setViewedProduct(null)}
@@ -362,7 +383,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto w-full px-4 pt-4 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-2 overflow-hidden">
               {currentView !== 'home' && (
-                <button 
+                <button
                   onClick={() => setCurrentView('home')}
                   className="p-1.5 -ml-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
                   aria-label="Volver al inicio"
@@ -371,15 +392,15 @@ const App: React.FC = () => {
                 </button>
               )}
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white truncate">
-                {currentView === 'profile' ? 'Mi Perfil' : 
-                 currentView === 'home' ? 'Inicio' : 
-                 currentView === 'checkout' ? 'Checkout' :
-                 'Catálogo'}
+                {currentView === 'profile' ? 'Mi Perfil' :
+                  currentView === 'home' ? 'Inicio' :
+                    currentView === 'checkout' ? 'Checkout' :
+                      'Catálogo'}
               </h1>
             </div>
 
             {currentView !== 'checkout' && (
-              <button 
+              <button
                 id="cart-btn"
                 onClick={() => setIsCartOpen(true)}
                 className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
@@ -422,16 +443,16 @@ const App: React.FC = () => {
                     onClick={() => setSearchQuery('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   >
-                     <span className="material-symbols-outlined text-lg">close</span>
+                    <span className="material-symbols-outlined text-lg">close</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Category Filter */}
-            <CategoryFilter 
-              selectedCategory={selectedCategory} 
-              onSelectCategory={setSelectedCategory} 
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
             />
           </div>
         </div>
@@ -444,22 +465,22 @@ const App: React.FC = () => {
       {showBottomNav && (
         <nav className="fixed bottom-0 left-0 right-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30">
           <div className="flex justify-around items-center h-16 px-4 max-w-lg mx-auto">
-            <NavItem 
-              icon="home" 
-              label="Inicio" 
-              active={currentView === 'home'} 
+            <NavItem
+              icon="home"
+              label="Inicio"
+              active={currentView === 'home'}
               onClick={() => setCurrentView('home')}
             />
-            <NavItem 
-              icon="storefront" 
-              label="Catálogo" 
-              active={currentView === 'catalog'} 
+            <NavItem
+              icon="storefront"
+              label="Catálogo"
+              active={currentView === 'catalog'}
               onClick={() => setCurrentView('catalog')}
             />
-            <NavItem 
-              icon="person" 
+            <NavItem
+              icon="person"
               label="Perfil"
-              active={currentView === 'profile'} 
+              active={currentView === 'profile'}
               onClick={() => setCurrentView('profile')}
             />
           </div>
@@ -470,16 +491,15 @@ const App: React.FC = () => {
 };
 
 // Helper component for Navigation Items
-const NavItem: React.FC<{ 
-  icon: string; 
-  label: string; 
+const NavItem: React.FC<{
+  icon: string;
+  label: string;
   active?: boolean;
   onClick: () => void;
 }> = ({ icon, label, active, onClick }) => (
   <button
-    className={`flex flex-col items-center justify-center space-y-1 transition-colors duration-200 w-16 ${
-      active ? 'text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-    }`}
+    className={`flex flex-col items-center justify-center space-y-1 transition-colors duration-200 w-16 ${active ? 'text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+      }`}
     onClick={onClick}
   >
     <span className={`material-symbols-outlined transition-transform duration-200 ${active ? 'font-semibold -translate-y-0.5' : ''}`}>{icon}</span>

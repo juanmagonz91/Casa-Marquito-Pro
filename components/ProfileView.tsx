@@ -11,15 +11,15 @@ interface ProfileViewProps {
 
 type ProfileSection = 'menu' | 'orders' | 'addresses';
 
-export const ProfileView: React.FC<ProfileViewProps> = ({ 
-  onLogout, 
+export const ProfileView: React.FC<ProfileViewProps> = ({
+  onLogout,
   orders,
   addresses,
   onUpdateAddresses
 }) => {
   const [currentSection, setCurrentSection] = useState<ProfileSection>('menu');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  
+
   const user = authService.getCurrentUser();
 
   // Handler for mock interactions
@@ -41,45 +41,55 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   // --- Sub-components for specific sections ---
 
-  const OrdersView = () => (
-    <div className="space-y-4 animate-in slide-in-from-right duration-300">
-      <h3 className="text-lg font-bold mb-4 px-4">Historial de Pedidos</h3>
-      
-      {orders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400">
-           <span className="material-symbols-outlined text-4xl mb-2">shopping_bag</span>
-           <p>Aún no has realizado pedidos.</p>
-        </div>
-      ) : (
-        orders.map((order) => (
-          <div key={order.id} className="bg-white dark:bg-slate-800 p-4 mx-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Pedido #{order.id}</span>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                order.status === 'delivered' 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                  : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-              }`}>
-                {order.status === 'pending' ? 'Pendiente Pago' : 'Entregado'}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mb-3">
-              {new Date(order.date).toLocaleDateString()} • {order.items.length} Artículos
-            </p>
-            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-3">
-              <span className="font-bold text-slate-900 dark:text-white">${order.total.toFixed(2)}</span>
-              <button 
-                onClick={() => handleFeatureNotReady('Detalles del Pedido')}
-                className="text-primary text-xs font-bold hover:underline"
-              >
-                Ver detalles
-              </button>
-            </div>
+  const OrdersView = () => {
+    const STATUS_MAP: Record<string, { label: string; icon: string; color: string }> = {
+      pending: { label: 'Pendiente Pago', icon: 'schedule', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' },
+      paid: { label: 'Pago Confirmado', icon: 'check_circle', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' },
+      shipped: { label: 'En Camino', icon: 'local_shipping', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' },
+      delivered: { label: 'Entregado', icon: 'inventory_2', color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' },
+    };
+
+    return (
+      <div className="space-y-4 animate-in slide-in-from-right duration-300">
+        <h3 className="text-lg font-bold mb-4 px-4">Historial de Pedidos</h3>
+
+        {orders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400">
+            <span className="material-symbols-outlined text-4xl mb-2">shopping_bag</span>
+            <p>Aún no has realizado pedidos.</p>
           </div>
-        ))
-      )}
-    </div>
-  );
+        ) : (
+          orders.map((order) => {
+            const statusInfo = STATUS_MAP[order.status] ?? STATUS_MAP['pending'];
+            return (
+              <div key={order.id} className="bg-white dark:bg-slate-800 p-4 mx-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Pedido #{order.id}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 ${statusInfo.color}`}>
+                    <span className="material-symbols-outlined text-xs" style={{ fontSize: '13px' }}>{statusInfo.icon}</span>
+                    {statusInfo.label}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">
+                  {new Date(order.date).toLocaleDateString()} • {order.items.length} Artículos
+                </p>
+                <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-3">
+                  <span className="font-bold text-slate-900 dark:text-white">${order.total.toFixed(2)}</span>
+                  <button
+                    onClick={() => handleFeatureNotReady('Detalles del Pedido')}
+                    className="text-primary text-xs font-bold hover:underline"
+                  >
+                    Ver detalles
+                  </button>
+                </div>
+              </div>
+            )
+          }))
+        }
+      </div>
+    );
+  };
+
 
   const AddressView = () => (
     <div className="space-y-4 animate-in slide-in-from-right duration-300">
@@ -92,7 +102,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <p className="font-medium text-slate-800 dark:text-white mt-1">{addr.line1}</p>
               <p className="text-sm text-slate-500">{addr.line2}</p>
             </div>
-            <button 
+            <button
               onClick={() => handleFeatureNotReady('Editar Dirección')}
               className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-full transition-colors"
             >
@@ -101,7 +111,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
         </div>
       ))}
-      <button 
+      <button
         onClick={handleAddAddress}
         className="mx-4 w-[calc(100%-2rem)] py-3 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
       >
@@ -118,7 +128,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       <div className="pb-24">
         {/* Sub-header */}
         <div className="px-4 py-4 flex items-center gap-2 mb-2">
-          <button 
+          <button
             onClick={() => setCurrentSection('menu')}
             className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-300"
           >
@@ -137,15 +147,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   // --- Menu View ---
 
   const menuItems: { icon: string; label: string; subtitle: string; section: ProfileSection }[] = [
-    { 
-      icon: 'shopping_bag', 
-      label: 'Mis Pedidos', 
+    {
+      icon: 'shopping_bag',
+      label: 'Mis Pedidos',
       subtitle: 'Ver historial de compras',
       section: 'orders'
     },
-    { 
-      icon: 'location_on', 
-      label: 'Direcciones', 
+    {
+      icon: 'location_on',
+      label: 'Direcciones',
       subtitle: 'Gestionar direcciones de envío',
       section: 'addresses'
     }
@@ -153,7 +163,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   return (
     <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 relative min-h-[calc(100vh-140px)]">
-      
+
       {/* Header Profile */}
       <div className="bg-white dark:bg-slate-800 p-6 shadow-sm mb-4">
         <div className="flex items-center space-x-4">
@@ -170,7 +180,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               {user?.isGuest ? 'Cuenta de invitado' : (user?.email || 'Sin correo')}
             </p>
             {!user?.isGuest && (
-              <button 
+              <button
                 onClick={() => handleFeatureNotReady('Editar Perfil')}
                 className="text-primary text-xs font-bold mt-1 hover:underline text-left"
               >
@@ -203,7 +213,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* Logout Button */}
       <div className="px-4 mt-8">
-        <button 
+        <button
           onClick={() => setShowLogoutConfirm(true)}
           className="w-full py-3 border border-red-200 dark:border-red-900/50 text-red-500 dark:text-red-400 font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
         >
@@ -227,13 +237,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               Se borrarán los datos temporales de tu carrito y favoritos.
             </p>
             <div className="flex space-x-3">
-              <button 
+              <button
                 onClick={() => setShowLogoutConfirm(false)}
                 className="flex-1 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 Cancelar
               </button>
-              <button 
+              <button
                 onClick={() => {
                   setShowLogoutConfirm(false);
                   onLogout();

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CartItem } from '../types';
+import { productService } from '../services/productService';
 
 interface CheckoutViewProps {
   cartItems: CartItem[];
@@ -36,16 +37,46 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
     phone: '',
     address: '',
     department: '',
-
     city: '',
     documentNumber: ''
   });
-
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  // ── Cupones ──────────────────────────────────────────────────────────────
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string; type: string; discountAmount: number; shippingFree: boolean; description: string;
+  } | null>(null);
+
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const total = subtotal + shipping;
+  const baseShipping = subtotal > 50 ? 0 : 9.99;
+  // Descuento por volumen (10% si subtotal >= $100)
+  const DISCOUNT_THRESHOLD = 100;
+  const DISCOUNT_RATE = 0.10;
+  const discount = subtotal >= DISCOUNT_THRESHOLD ? parseFloat((subtotal * DISCOUNT_RATE).toFixed(2)) : 0;
+  const amountToDiscount = subtotal < DISCOUNT_THRESHOLD ? parseFloat((DISCOUNT_THRESHOLD - subtotal).toFixed(2)) : 0;
+  // Aplicar cupón
+  const couponDiscount = appliedCoupon?.type !== 'shipping' ? (appliedCoupon?.discountAmount ?? 0) : 0;
+  const shipping = (appliedCoupon?.shippingFree) ? 0 : baseShipping;
+  const total = parseFloat((subtotal - discount - couponDiscount + shipping).toFixed(2));
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const result = await productService.validateCoupon(couponInput.trim(), subtotal - discount);
+      setAppliedCoupon(result);
+      setCouponInput('');
+    } catch (err: any) {
+      setCouponError(err.message || 'Cupón no válido.');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const validateField = (name: string, value: string): string => {
     switch (name) {
@@ -107,17 +138,11 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      // Scroll to the first error if needed, or just let the user see the red fields
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-    // Simulate processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     setLoading(false);
-    onPlaceOrder(formData);
+    onPlaceOrder({ ...formData, appliedCoupon });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -388,19 +413,95 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
               ))}
             </div>
 
+            {/* Banner: cerca del descuento por volumen */}
+            {amountToDiscount > 0 && amountToDiscount <= 50 && (
+              <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
+                <span className="material-symbols-outlined text-base">local_offer</span>
+                <span>¡Agrega <strong>${amountToDiscount.toFixed(2)}</strong> más y obtené un <strong>10% de descuento</strong>!</span>
+              </div>
+            )}
+
+            {/* ── Sección Cupón ── */}
+            <div className="mb-4">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-600 text-base">confirmation_number</span>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">{appliedCoupon.code}</p>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-500">{appliedCoupon.description}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setAppliedCoupon(null)} className="text-slate-400 hover:text-red-500 transition-colors">
+                    <span className="material-symbols-outlined text-base">close</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                    placeholder="Código de cupón"
+                    className={`flex-1 text-sm bg-slate-50 dark:bg-slate-900 border rounded-xl px-3 py-2 dark:text-white outline-none transition-all ${couponError ? 'border-red-400 focus:border-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-primary'
+                      }`}
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="px-4 py-2 bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 text-sm font-bold rounded-xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-1"
+                  >
+                    {couponLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Aplicar'}
+                  </button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">error</span>{couponError}
+                </p>
+              )}
+            </div>
+
             <div className="space-y-2 border-t border-slate-100 dark:border-slate-700 pt-4 text-sm">
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
+
+              {discount > 0 && (
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">local_offer</span>
+                    Descuento 10% OFF
+                  </span>
+                  <span>-${discount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {appliedCoupon && couponDiscount > 0 && (
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">confirmation_number</span>
+                    Cupón {appliedCoupon.code}
+                  </span>
+                  <span>-${couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Envío</span>
-                <span>{shipping === 0 ? 'Gratis' : `$${shipping.toFixed(2)}`}</span>
+                <span>{shipping === 0 ? '🎁 Gratis' : `$${shipping.toFixed(2)}`}</span>
               </div>
               <div className="flex justify-between font-bold text-lg text-slate-900 dark:text-white pt-2 border-t border-slate-100 dark:border-slate-700 mt-2">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span className={(discount > 0 || couponDiscount > 0) ? 'text-emerald-600 dark:text-emerald-400' : ''}>${total.toFixed(2)}</span>
               </div>
+              {(discount > 0 || couponDiscount > 0) && (
+                <p className="text-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  🎉 ¡Ahorraste ${(discount + couponDiscount).toFixed(2)} en esta compra!
+                </p>
+              )}
             </div>
 
             <button
