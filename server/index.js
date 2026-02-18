@@ -344,3 +344,5 @@ app.listen(PORT, () => {
   console.log(`   - API Cupones:    http://localhost:${PORT}/api/coupons/validate`);
   console.log(`   - API Status:     http://localhost:${PORT}/api/status\n`);
 });
+
+// Versión final Multi-Cloud

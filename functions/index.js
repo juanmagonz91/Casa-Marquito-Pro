@@ -139,3 +139,5 @@ export const onOrderStatusChanged = onDocumentUpdated("orders/{orderId}", async 
         }
     }
 });
+
+// Versión final Multi-Cloud

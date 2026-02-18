@@ -167,3 +167,4 @@ function getCategoryIcon(category: string): string {
     default: return 'category';
   }
 }
+// Versión final Multi-Cloud
