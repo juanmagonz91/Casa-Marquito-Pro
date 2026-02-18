@@ -19,20 +19,25 @@ El objetivo principal de **Casa Marquito** es ofrecer una experiencia de compra 
 
 ## 🛠️ Tecnologías Utilizadas
 
-### Frontend
-| Tecnología | Versión | Uso |
+### Infraestructura (Multi-Cloud)
+| Componente | Proveedor | Uso |
 |---|---|---|
-| **React** | 19 | Librería principal de UI |
-| **TypeScript** | 5.8 | Tipado estático |
-| **Vite** | 6 | Bundler y servidor de desarrollo |
+| **Frontend Hosting** | **Firebase** | Alojamiento de la aplicación React estática |
+| **Autenticación** | **Firebase Auth** | Gestión de usuarios e inicio de sesión (Google/Email) |
+| **Backend API** | **Render** | Servidor Express para procesamiento de pedidos y lógica |
+| **Base de Datos** | **Supabase** | Base de Datos Relacional (PostgreSQL) |
+
+### Frontend
+- **React 19** + **TypeScript 5.8**
+- **Vite 6** (Bundler y entorno)
+- **TailwindCSS** (Estilizado)
+- **Material Symbols** (Iconografía)
 
 ### Backend
-| Tecnología | Versión | Uso |
-|---|---|---|
-| **Node.js** | — | Entorno de ejecución |
-| **Express** | 5 | Framework para la API REST |
-| **CORS** | 2.8 | Manejo de peticiones cross-origin |
-| **body-parser** | 2.2 | Parseo de cuerpos JSON |
+- **Node.js** + **Express 5**
+- **PostgreSQL (pg)** — Conector de base de datos
+- **Nodemailer** — Envío de correos vía SMTP (Gmail)
+- **PDFKit** & **ExcelJS** — Generación de documentos
 
 ---
 
@@ -40,130 +45,82 @@ El objetivo principal de **Casa Marquito** es ofrecer una experiencia de compra 
 
 ```
 Casa-Marquito/
-├── App.tsx                  # Componente raíz: estado global, navegación y lógica principal
-├── types.ts                 # Interfaces TypeScript: Product, CartItem, Order, Address
-├── index.tsx                # Punto de entrada de React
-├── index.html               # HTML base
-├── vite.config.ts           # Configuración de Vite
-├── components/
-│   ├── HomeView.tsx         # Página de inicio con acceso por categorías
-│   ├── ProductCard.tsx      # Tarjeta individual de producto
-│   ├── ProductDetailModal.tsx # Modal con detalle ampliado del producto
-│   ├── CategoryFilter.tsx   # Filtro horizontal de categorías
-│   ├── CartDrawer.tsx       # Carrito lateral deslizable
-│   ├── CheckoutView.tsx     # Formulario de checkout y datos de envío
-│   ├── OrderSuccessView.tsx # Pantalla de confirmación con recomendaciones
-│   ├── ProfileView.tsx      # Historial de pedidos y gestión de direcciones
-│   └── AuthView.tsx         # Vista de autenticación (modo invitado)
+├── src/
+│   └── firebase.ts          # Configuración del SDK de Firebase
+├── components/              # Componentes de React (Home, Checkout, Perfil, etc.)
 ├── services/
-│   ├── productService.ts    # Obtención de productos y envío de pedidos a la API
-│   ├── emailService.ts      # Generación simulada de email de confirmación
-│   └── authService.ts       # Gestión de sesión (modo invitado con localStorage)
-└── server/
-    ├── index.js             # Servidor Express con API REST (puerto 3001)
-    └── data.js              # Datos de productos (base de datos en memoria)
+│   ├── productService.ts    # Consumo de API en Render
+│   └── authService.ts       # Integración con Firebase Auth
+├── server/
+│   ├── index.js             # API REST principal (Render)
+│   ├── db.js                # Conexión a PostgreSQL (Supabase)
+│   ├── emailService.js      # Lógica de correos con adjuntos
+│   ├── pdfGenerator.js      # Generación de resúmenes en PDF
+│   └── excelGenerator.js    # Generación de reportes en Excel
+├── scripts/                 # Scripts de migración y herramientas
+└── server/schema.sql        # Definición de tablas PostgreSQL
 ```
 
 ---
 
-## 🔌 API REST (Backend)
+## ☁️ Arquitectura Multi-Cloud
 
-El servidor corre en `http://localhost:3001` y expone los siguientes endpoints:
+Para garantizar escalabilidad y evitar límites de facturación, **Casa Marquito** utiliza un enfoque distribuido:
+
+1.  **Frontend (Firebase)**: Servido de forma global. Utiliza Firebase Auth para proteger las rutas y gestionar usuarios.
+2.  **Backend (Render)**: Recibe los pedidos del frontend y los procesa. Se encarga de la lógica de negocio pesada, como generar documentos y enviar emails.
+3.  **Database (Supabase)**: Almacena de forma persistente y relacional los productos, usuarios y pedidos.
+
+---
+
+## 🔌 API REST (Render)
+
+La API vive en `https://casa-marquito.onrender.com/api` (o tu URL de producción).
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/products` | Retorna la lista completa de productos |
-| `GET` | `/api/products/:id` | Retorna un producto específico por ID |
-| `POST` | `/api/orders` | Registra un nuevo pedido |
-
-> Si el backend no está disponible, el frontend carga automáticamente datos de ejemplo (mock data) para que la app siga funcionando.
-
----
-
-## 🗂️ Categorías de Productos
-
-`Cocina` · `Decoración` · `Jardín` · `Textil` · `Baño`
+| `GET` | `/api/status` | Verifica el estado del servidor y la conexión a la base de datos |
+| `GET` | `/api/products` | Obtiene el catálogo desde PostgreSQL |
+| `POST` | `/api/orders` | Guarda un pedido en SQL y dispara el flujo de emails |
+| `POST` | `/api/coupons/validate` | Valida cupones de descuento |
 
 ---
 
-## 🚀 Instalación y Ejecución
+## 🚀 Instalación y Ejecución Local
 
 ### Prerrequisitos
-- **Node.js** instalado
+- **Node.js** 18+
+- Un proyecto en **Firebase**
+- Una base de datos en **Supabase**
 
 ### Pasos
 
-1. Instalar dependencias:
-   ```bash
-   npm install
-   ```
+1.  **Backend**:
+    ```bash
+    # En la raíz, configurar el archivo .env
+    DATABASE_URL=tu_conexion_supabase
+    SMTP_USER=tu_email
+    SMTP_PASS=tu_app_password
+    
+    # Iniciar servidor
+    npm run server
+    ```
 
-2. Configurar la API Key de Gemini (necesaria para el servicio de email):
-   ```
-   GEMINI_API_KEY=tu_api_key_aqui
-   ```
-   Crear el archivo `.env.local` en la raíz del proyecto con la variable anterior.
-
-3. Iniciar la aplicación:
-   ```bash
-   npm run dev
-   ```
-
-La app estará disponible en `http://localhost:5173` (o el puerto que indique Vite).
-
----
-
-## 🐳 Docker
-
-El proyecto incluye soporte completo para Docker, permitiendo levantar toda la aplicación con un solo comando.
-
-### Archivos incluidos
-
-| Archivo | Descripción |
-|---|---|
-| `Dockerfile.frontend` | Build multi-etapa: compila con Node y sirve con Nginx |
-| `Dockerfile.backend` | Imagen Node ligera para el servidor Express |
-| `docker-compose.yml` | Orquesta ambos servicios con healthcheck |
-| `nginx.conf` | Configuración de Nginx para SPA + proxy inverso a la API |
-| `.dockerignore` | Excluye archivos innecesarios del contexto de build |
-
-### Levantar con Docker Compose
-
-```bash
-# Construir imágenes e iniciar los servicios
-docker-compose up --build
-
-# En segundo plano
-docker-compose up --build -d
-```
-
-Una vez iniciado:
-- **Frontend** → `http://localhost:3000`
-- **Backend API** → `http://localhost:3001/api/products`
-
-### Comandos útiles
-
-```bash
-# Ver logs en tiempo real
-docker-compose logs -f
-
-# Detener los servicios
-docker-compose down
-
-# Reconstruir solo un servicio
-docker-compose build backend
-docker-compose build frontend
-```
-
-> **Nota:** Si usás la API de Gemini, creá un archivo `.env` en la raíz con `GEMINI_API_KEY=tu_api_key` antes de hacer el build.
+2.  **Frontend**:
+    ```bash
+    # Configurar VITE_API_URL en .env
+    VITE_API_URL=http://localhost:3001/api
+    
+    # Iniciar React
+    npm run dev
+    ```
 
 ---
 
 ## ✨ Funcionalidades Destacadas
 
-- 🔍 **Búsqueda inteligente** — Ignora acentos y mayúsculas; busca en todas las categorías simultáneamente.
-- 🛒 **Carrito persistente** — El carrito se guarda en `localStorage` y sobrevive recargas de página.
-- 📦 **Historial de pedidos** — Los pedidos completados quedan guardados en el perfil del usuario.
-- 📍 **Gestión de direcciones** — El usuario puede agregar y administrar múltiples direcciones de envío.
-- 🎁 **Recomendaciones post-compra** — Al finalizar un pedido, se sugieren productos relacionados.
-- 🌙 **Soporte Dark Mode** — La interfaz se adapta automáticamente al tema del sistema operativo.
+- 🔍 **Búsqueda inteligente** — Soporte para acentos y categorías.
+- � **Checkout SQL** — Los pedidos se guardan en una DB relacional robusta.
+- � **Notificaciones PDF/Excel** — El cliente recibe un PDF y el administrador un Excel.
+- 🔐 **Autenticación Real** — Integrado con Firebase Auth para una seguridad profesional.
+- 🌙 **Modern Design** — Soporte nativo para Dark Mode y micro-animaciones.
