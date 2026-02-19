@@ -43,7 +43,7 @@ const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage('cart', []));
   const [orders, setOrders] = useState<Order[]>(() => loadFromStorage('orders', []));
   const [addresses, setAddresses] = useState<Address[]>(() => loadFromStorage('addresses', [
-    { id: 1, label: 'Casa', line1: 'Av. Reforma 123, Depto 4B', line2: 'Ciudad de México, CDMX 06600' }
+    { id: 1, label: 'Dirección Principal', line1: 'Calle Carlos Antonio Lopez', line2: 'Encarnacion, Paraguay' }
   ]));
 
   // UI States
