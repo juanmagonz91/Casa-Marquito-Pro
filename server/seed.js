@@ -12,7 +12,7 @@ const PRODUCTS = [
     { id: '3', name: 'Lámpara de Escritorio', price: 48.00, category: 'Decoración', stock: 0, image_url: 'https://images.unsplash.com/photo-1534073828943-f801091bb18c?auto=format&fit=crop&q=80&w=800', description: 'Lámpara LED moderna con luz cálida ajustable.' },
     { id: '4', name: 'Cojín Texturizado', price: 19.99, category: 'Textil', stock: 3, image_url: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&q=80&w=800', description: 'Cojín suave con textura tejida en color beige neutro.' },
     { id: '5', name: 'Planta Suculenta', price: 15.00, category: 'Jardín', stock: 12, image_url: 'https://images.unsplash.com/photo-1509423350716-97f9360b4e09?auto=format&fit=crop&q=80&w=800', description: 'Pequeña suculenta artificial en maceta geométrica.' },
-    { id: '6', name: 'Dispensador de Jabón', price: 22.00, category: 'Baño', stock: 1, image_url: 'https://images.unsplash.com/photo-1603533866380-48281358997a?auto=format&fit=crop&q=80&w=800', description: 'Dispensador de vidrio ámbar elegante y reutilizable.' },
+    { id: '6', name: 'Dispensador de Jabón', price: 22.00, category: 'Baño', stock: 1, image_url: 'https://images.pexels.com/photos/4239091/pexels-photo-4239091.jpeg?auto=compress&cs=tinysrgb&h=750&w=1260', description: 'Dispensador de vidrio ámbar elegante y reutilizable.' },
 ];
 
 /**

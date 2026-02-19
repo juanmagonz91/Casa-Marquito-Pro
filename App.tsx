@@ -391,11 +391,9 @@ const App: React.FC = () => {
                   <span className="material-symbols-outlined text-2xl">arrow_back</span>
                 </button>
               )}
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white truncate">
-                {currentView === 'profile' ? 'Mi Perfil' :
-                  currentView === 'home' ? 'Inicio' :
-                    currentView === 'checkout' ? 'Checkout' :
-                      'Catálogo'}
+              <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span className="bg-primary text-background-dark px-1.5 py-0.5 rounded-md text-sm">CM</span>
+                CASA MARQUITO
               </h1>
             </div>
 
