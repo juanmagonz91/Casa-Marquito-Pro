@@ -364,7 +364,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 border-dashed">
                     <span className="text-xs uppercase font-bold text-slate-400">Beneficiario</span>
-                    <span className="font-semibold text-right">Catálogo Estilo S.A.</span>
+                    <span className="font-semibold text-right">CASA MARQUITO S.A.</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 border-dashed">
                     <span className="text-xs uppercase font-bold text-slate-400">Cuenta</span>
@@ -385,7 +385,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onPlaceOr
                 <span className="material-symbols-outlined text-lg mt-0.5">info</span>
                 <p>
                   Una vez realizada la transferencia, por favor envía tu comprobante de pago al correo
-                  <span className="font-bold mx-1">pagos@catalogoestilo.com.py</span>
+                  <span className="font-bold mx-1">pagos@casamarquito.com.py</span>
                   para procesar el envío.
                 </p>
               </div>

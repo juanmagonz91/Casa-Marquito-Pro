@@ -71,7 +71,7 @@ export async function sendOrderEmail(order, pdfBuffer) {
           </div>
         </div>
         <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Casa Marquito · Asunción, Paraguay</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Casa Marquito · Encarnación, Paraguay</p>
         </div>
       </div>`,
     attachments: [{
@@ -154,7 +154,7 @@ export async function sendStatusUpdateEmail(order, newStatus) {
           <p style="color: #94a3b8; font-size: 13px;">¿Tenés alguna consulta? Respondé a este correo y te ayudamos.</p>
         </div>
         <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Casa Marquito · Asunción, Paraguay</p>
+          <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 Casa Marquito · Encarnación, Paraguay</p>
         </div>
       </div>`,
   };
