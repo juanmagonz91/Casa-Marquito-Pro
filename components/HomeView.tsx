@@ -105,7 +105,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ products, onCategorySelect }
         <div className="max-w-7xl mx-auto">
           <h3 className="text-white text-xl font-bold mb-8 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">storefront</span>
-            Catálogo Estilo
+            CASA MARQUITO
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
@@ -113,8 +113,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ products, onCategorySelect }
               <span className="material-symbols-outlined text-primary mt-1">location_on</span>
               <div>
                 <p className="font-semibold text-white text-base mb-1">Dirección Principal</p>
-                <p>Av. Reforma 123, Torre Empresarial</p>
-                <p>Ciudad de México, México</p>
+                <p>Calle Carlos Antonio Lopez</p>
+                <p>Encarnacion, Paraguay</p>
               </div>
             </div>
 
@@ -146,7 +146,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ products, onCategorySelect }
           </div>
 
           <div className="mt-12 pt-6 border-t border-slate-700 text-center text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© {new Date().getFullYear()} Catálogo Estilo. Todos los derechos reservados.</p>
+            <p>© {new Date().getFullYear()} CASA MARQUITO. Todos los derechos reservados.</p>
             <div className="flex gap-4">
               <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
               <a href="#" className="hover:text-primary transition-colors">Términos</a>
