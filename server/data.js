@@ -48,7 +48,7 @@ export const products = [
     name: 'Dispensador de Jabón',
     price: 22.00,
     category: 'Baño',
-    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfX2wEaiwHf4wp9QHJkwKZQb81ck2A8umeY5UPQ--SC2OFXYZza_wHQ-Qwk1Fl7o6zP_XWVUkWAA1-N1l7simWXUBYLi8Ogby0RiubXwWUAE20mUPYyZVYCFFmdLfpZgD-kpNd7O6_nSo2H4G3Let0kbDMoOoJsqeAM2mhJ5aSBAaBHtiOmzNTGypyEyfcsH92HajKYTSSj0Jea-ITAdr3KTLLKYOp0zYTpX8QSHafbNyI_XvVGlXUMPK05UhP2xzGW8o2xu-aeNf_',
+    imageUrl: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?w=800&auto=format&fit=crop&q=80',
     description: 'Dispensador de vidrio ámbar elegante y reutilizable.'
   },
 ];
